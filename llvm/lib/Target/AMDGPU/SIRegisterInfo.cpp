@@ -3626,6 +3626,18 @@ bool SIRegisterInfo::shouldCoalesce(MachineInstr *MI,
                                     unsigned DstSubReg,
                                     const TargetRegisterClass *NewRC,
                                     LiveIntervals &LIS) const {
+  auto MFI = MI->getMF()->getInfo<SIMachineFunctionInfo>();
+  if (MFI->isMIRInPerThreadControlFlow()) {
+    // See the implementation of isDivergentRegClass
+    // isDivergentRegClass(RC) == !isSGPRClass(RC)
+    // This is okay because we should have special handling for vector-i1 values
+    // stored in SGPRs.
+    if (!isDivergentRegClass(SrcRC) || !isDivergentRegClass(DstRC) ||
+        !isDivergentRegClass(NewRC))
+      return false;
+    // TODO: need to check the copy of whole-wave vector registers.
+    // Such copy cannot be coalesced while CFG is in per-thread mode.
+  }
   unsigned SrcSize = getRegSizeInBits(*SrcRC);
   unsigned DstSize = getRegSizeInBits(*DstRC);
   unsigned NewSize = getRegSizeInBits(*NewRC);

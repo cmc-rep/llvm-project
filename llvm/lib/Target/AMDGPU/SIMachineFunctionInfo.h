@@ -390,6 +390,8 @@ class SIMachineFunctionInfo final : public AMDGPUMachineFunction,
                                     private MachineRegisterInfo::Delegate {
   friend class GCNTargetMachine;
 
+  // State of the MIR control-flow for this machine function.
+  bool MIRInPerThreadCF = false;
   // State of MODE register, assumed FP mode.
   SIModeRegisterDefaults Mode;
 
@@ -1046,6 +1048,12 @@ public:
 
   void markPSInputEnabled(unsigned Index) {
     PSInputEnable |= 1 << Index;
+  }
+
+  bool isMIRInPerThreadControlFlow() const { return MIRInPerThreadCF; }
+
+  void setMIRInPerThreadControlFlow(bool PerThread) {
+    MIRInPerThreadCF = PerThread;
   }
 
   bool returnsVoid() const {
